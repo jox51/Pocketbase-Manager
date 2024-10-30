@@ -4,9 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-
+use App\Services\LogManagerService;
 class LogsController extends Controller
 {
+  private $logManagerService;
+
+  public function __construct(LogManagerService $logManagerService)
+  {
+      $this->logManagerService = $logManagerService;
+  }
     public function show(Request $request, $instance)
     {
         $logPath = storage_path('logs/laravel.log');

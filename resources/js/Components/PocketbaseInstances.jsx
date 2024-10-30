@@ -45,8 +45,8 @@ export default function PocketbaseInstances() {
             {/* Instance Creation Form */}
             <CreateInstanceForm />
 
-            {/* Instances Grid */}
-            <div className="max-w-6xl mx-auto">
+            {/* Instances Container */}
+            <div className="max-w-7xl mx-auto">
                 <div className="flex justify-center items-center mb-4 space-x-8">
                     <h2 className="text-xl font-semibold">
                         Pocketbase Instances
@@ -75,13 +75,14 @@ export default function PocketbaseInstances() {
                         No instances created yet.
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="flex flex-wrap gap-4 justify-center">
                         {instancesCreated.map((instance) => (
-                            <InstanceCard
-                                key={instance.id}
-                                instance={instance}
-                                onAction={handleInstanceAction}
-                            />
+                            <div key={instance.id} className="w-full sm:w-[calc(50%-8px)] md:w-[calc(33.333%-11px)] max-w-sm">
+                                <InstanceCard
+                                    instance={instance}
+                                    onAction={handleInstanceAction}
+                                />
+                            </div>
                         ))}
                     </div>
                 )}

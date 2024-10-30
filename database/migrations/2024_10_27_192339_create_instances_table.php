@@ -13,6 +13,8 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->integer('port')->default(8090)->unique();
             $table->enum('status', ['created','stopped', 'starting', 'running', 'updating'])->default('created');
+            $table->string('version')->nullable()->after('port');
+            $table->string('download_url')->nullable()->after('version');
             $table->timestamps();
         });
     }

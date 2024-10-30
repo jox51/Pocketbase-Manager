@@ -32,11 +32,15 @@ class PocketbaseDashboardController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255|unique:instances,name',
                 'port' => 'required|integer|min:1000|max:65535|unique:instances,port',
+                'version' => 'nullable|string',
+                'download_url' => 'nullable|url'
             ]);
     
             $instance = Instance::create([
                 'name' => $validated['name'],
                 'port' => $validated['port'],
+                'version' => $validated['version'] ?? null,
+                'download_url' => $validated['download_url'] ?? null,
                 'status' => 'created'
             ]);
     
@@ -61,7 +65,15 @@ class PocketbaseDashboardController extends Controller
         $instance->update(['status' => 'updating']);
         
         try {
-            $success = $this->instanceService->startInstance($validated['name'], $validated['port']);
+            // $version = $instance->version ?? '';
+            // $downloadUrl = $instance->download_url ?? '';
+            
+            $success = $this->instanceService->startInstance(
+                $validated['name'], 
+                $validated['port'],
+                // $version,        // Pass empty string instead of null
+                // $downloadUrl    // Pass empty string instead of null
+            );
 
             if ($success) {
                 $instance->update(['status' => 'running']);
@@ -129,7 +141,7 @@ class PocketbaseDashboardController extends Controller
 
         $instance = Instance::where('name', $validated['name'])->firstOrFail();
         
-        if ($instance->status !== 'stopped') {
+        if ($instance->status !== 'stopped' && $instance->status !== 'created') {
             return redirect()->back()->with('error', 'Instance must be stopped before it can be deleted');
         }
         

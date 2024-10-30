@@ -1,29 +1,95 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "@inertiajs/react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { router } from "@inertiajs/react";
 
 export default function CreateInstanceForm() {
     const { data, setData, post, processing, errors } = useForm({
         name: "",
         port: "8090",
         status: "created", // Default status for new instances
+        version: "", // Add version to form data
+        download_url: "", // Add download_url to form data
     });
+
+    const [versions, setVersions] = useState([]);
+    const [isLoadingVersions, setIsLoadingVersions] = useState(false);
+    console.log({ versions });
+
+    // Fetch PocketBase versions when component mounts
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchVersions = async () => {
+            if (!isMounted) return;
+            setIsLoadingVersions(true);
+
+            try {
+                const response = await fetch("/api/pocketbase-versions", {
+                    headers: {
+                        Accept: "application/json",
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (!isMounted) return;
+
+                // Access the versions array from the response
+                setVersions(data.versions);
+            } catch (error) {
+                if (!isMounted) return;
+                console.error("Error fetching PocketBase versions:", error);
+                setVersions([]);
+            } finally {
+                if (!isMounted) return;
+                setIsLoadingVersions(false);
+            }
+        };
+
+        fetchVersions();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const handleVersionChange = (e) => {
+        const selectedVersion = versions.find(
+            (v) => v.version === e.target.value
+        );
+        setData({
+            ...data,
+            version: selectedVersion?.version || "",
+            download_url: selectedVersion?.download_url || "",
+        });
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         post("/create-instance", {
             onSuccess: () => {
-                setData({ name: "", port: "8090", status: "created" });
+                setData({
+                    name: "",
+                    port: "8090",
+                    status: "created",
+                    version: "",
+                    download_url: "",
+                });
             },
             preserveScroll: true,
         });
     };
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-sm max-w-md mx-auto">
-            <h2 className="text-xl font-semibold mb-4">Create New Instance</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow-sm max-w-sm mx-auto">
+            <h2 className="text-lg font-semibold mb-3">Create New Instance</h2>
+            <form onSubmit={handleSubmit} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                     <div>
                         <div className="flex items-center justify-between">
                             <label className="block text-sm font-medium text-gray-700">
@@ -90,6 +156,7 @@ export default function CreateInstanceForm() {
                         )}
                     </div>
                 </div>
+
                 <button
                     type="submit"
                     disabled={processing || !data.name || data.port.length < 4}

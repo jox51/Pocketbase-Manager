@@ -6,6 +6,7 @@ export default function ActionButtons({
     onAction,
     onDelete,
 }) {
+    console.log({ instance });
     return (
         <div className="flex gap-3">
             <button
@@ -42,13 +43,14 @@ export default function ActionButtons({
 
             <button
                 className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-white ${
-                    instance.status !== "stopped" || isAnyInstanceUpdating
+                    instance.status !== "stopped" && instance.status !== "created" || isAnyInstanceUpdating
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-red-500 hover:bg-red-600"
                 }`}
                 onClick={onDelete}
                 disabled={
-                    instance.status !== "stopped" || isAnyInstanceUpdating
+                    (instance.status !== "stopped" && instance.status !== "created") ||
+                    isAnyInstanceUpdating
                 }
             >
                 <svg

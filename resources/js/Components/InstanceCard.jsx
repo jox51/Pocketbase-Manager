@@ -115,7 +115,7 @@ export default function InstanceCard({ instance }) {
     };
 
     return (
-        <div className="bg-white rounded-3xl p-8 shadow-sm">
+        <div className="bg-white rounded-3xl p-8 shadow-sm max-w-md">
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                     <h2 className="text-3xl font-medium">{instance.name}</h2>

@@ -116,6 +116,7 @@ class PocketbaseInstanceService
 
         return $success;
     }
+    
 
     private function cleanupEnvFile(): bool
     {

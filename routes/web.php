@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\TerminalController;
 use App\Http\Controllers\LogsController;
+use App\Http\Controllers\PocketbaseVersionController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -66,5 +67,8 @@ Route::get('/terminal/{instance}', [TerminalController::class, 'show'])
 
 Route::get('/instances/{instance}/logs', [LogsController::class, 'show'])
     ->name('instances.logs');
+
+Route::get('/api/pocketbase-versions', [PocketbaseVersionController::class, 'index'])
+    ->name('api.pocketbase-versions');
 
 require __DIR__.'/auth.php';
