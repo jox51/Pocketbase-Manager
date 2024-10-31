@@ -298,7 +298,17 @@ class PocketbaseInstanceService
         }
 
         $isRunning = $isRunningInDocker && $isHealthy;
-        $newStatus = $isRunning ? 'running' : 'stopped';
+        
+        // Determine the new status based on current status and running state
+        $newStatus = $instance->status;
+        if ($isRunning) {
+            $newStatus = 'running';
+        } elseif ($instance->status === 'running') {
+            $newStatus = 'stopped';
+        } elseif ($instance->status === 'created') {
+            // Keep 'created' status if it hasn't been started yet
+            $newStatus = 'created';
+        }
         
         Log::debug('Final status determination:', [
             'instance' => $containerName,

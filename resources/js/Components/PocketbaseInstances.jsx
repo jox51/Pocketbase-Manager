@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import InstanceCard from "./InstanceCard";
 import CreateInstanceForm from "./CreateInstanceForm";
 import ShutdownModal from "./ShutdownModal";
+import { toast } from 'react-toastify';
+
 export default function PocketbaseInstances() {
     const [showModal, setShowModal] = useState(false);
     const [isTestingSpeed, setIsTestingSpeed] = useState(false);
@@ -49,25 +51,46 @@ export default function PocketbaseInstances() {
 
             if (data.success) {
                 console.log("Speed test results:", data.performance);
-                // You might want to show these results in a modal or toast
-                console.log(
-                    `Wrote ${data.performance.successful_records} records in ${data.performance.total_time_seconds} seconds`
-                );
-                console.log(
-                    `Average time per record: ${data.performance.average_time_per_record_seconds} seconds`
-                );
-                console.log(
-                    `Records per second: ${data.performance.records_per_second}`
-                );
+                toast.success('Speed test completed successfully', {
+                    position: "top-right",
+                    autoClose: 5000,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                });
+                window.location.reload();
             } else {
                 console.error("Speed test failed:", data.message);
+                toast.error(data.message || 'Speed test failed', {
+                    position: "top-right",
+                    autoClose: 5000,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                });
             }
         } catch (error) {
             console.error("Speed test error:", error);
+            toast.error('An error occurred while running the speed test', {
+                position: "top-right",
+                autoClose: 5000,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
         } finally {
             setIsTestingSpeed(false);
         }
     };
+
+    // Update the separation logic to get ALL speed test instances
+    const speedTestInstances = instancesCreated.filter(
+        (instance) => instance.is_speed_test
+    );
+
+    const regularInstances = instancesCreated.filter(
+        (instance) => !instance.is_speed_test
+    );
 
     return (
         <div className="space-y-6">
@@ -80,10 +103,12 @@ export default function PocketbaseInstances() {
                 />
             )}
 
-            {/* Instance Creation Form */}
-            <CreateInstanceForm />
+            {/* Create Form */}
+            <div className="max-w-md mx-auto">
+                <CreateInstanceForm />
+            </div>
 
-            {/* Instances Container */}
+            {/* Regular Instances Container */}
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-center items-center mb-4 space-x-8">
                     <h2 className="text-xl font-semibold">
@@ -157,25 +182,31 @@ export default function PocketbaseInstances() {
                         </button>
                     </div>
                 </div>
-                {instancesCreated.length === 0 ? (
-                    <div className="bg-white rounded-lg shadow-sm p-6 text-center text-gray-500">
-                        No instances created yet.
-                    </div>
-                ) : (
-                    <div className="flex flex-wrap gap-4 justify-center">
-                        {instancesCreated.map((instance) => (
-                            <div
-                                key={instance.id}
-                                className="w-full sm:w-[calc(50%-8px)] md:w-[calc(33.333%-11px)] max-w-sm"
-                            >
-                                <InstanceCard
-                                    instance={instance}
-                                    onAction={handleInstanceAction}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
+
+                <div className="columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4">
+                    {speedTestInstances.map((instance) => (
+                        <div
+                            key={instance.id}
+                            className="break-inside-avoid mb-4"
+                        >
+                            <InstanceCard
+                                instance={instance}
+                                onAction={handleInstanceAction}
+                            />
+                        </div>
+                    ))}
+                    {regularInstances.map((instance) => (
+                        <div
+                            key={instance.id}
+                            className="break-inside-avoid mb-4"
+                        >
+                            <InstanceCard
+                                instance={instance}
+                                onAction={handleInstanceAction}
+                            />
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

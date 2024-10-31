@@ -76,4 +76,12 @@ Route::post('/speed-test', [PocketbaseTestController::class, 'runSpeedTest'])
     ->middleware(['auth', 'verified'])
     ->name('speed-test');
 
+Route::get('/privacy', function () {
+    return Inertia::render('Privacy');
+})->name('privacy');
+
+Route::get('/terms', function () {
+    return Inertia::render('Terms');
+})->name('terms');
+
 require __DIR__.'/auth.php';

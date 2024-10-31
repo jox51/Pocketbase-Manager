@@ -23,20 +23,6 @@ export default function Footer() {
                     {/* Links */}
                     <div className="flex items-center space-x-6">
                         <Link
-                            href="/docs"
-                            className="text-sm text-gray-300 hover:text-white"
-                        >
-                            Documentation
-                        </Link>
-                        <a
-                            href="https://github.com/your-repo"
-                            className="text-sm text-gray-300 hover:text-white"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            GitHub
-                        </a>
-                        <Link
                             href="/privacy"
                             className="text-sm text-gray-300 hover:text-white"
                         >

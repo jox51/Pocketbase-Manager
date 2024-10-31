@@ -6,6 +6,8 @@ import { Link, usePage } from "@inertiajs/react";
 import { useState } from "react";
 import Logo from "../../assets/logo.svg";
 import Footer from "@/Components/Footer";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
@@ -14,7 +16,7 @@ export default function AuthenticatedLayout({ header, children }) {
         useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="flex flex-col min-h-screen bg-gray-100">
             <nav className="bg-white shadow">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 justify-between items-center">
@@ -166,8 +168,19 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
             </nav>
 
-            <main className="py-6">{children}</main>
-
+            <main className="flex-grow py-6">{children}</main>
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
             <Footer />
         </div>
     );

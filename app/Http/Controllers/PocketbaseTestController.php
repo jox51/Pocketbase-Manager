@@ -13,18 +13,30 @@ use App\Models\SpeedTest;
 class PocketbaseTestController extends Controller
 {
     private string $baseUrl;
-    private string $adminEmail = 'new@example.com';
-    private string $adminPassword = '1234567890';
+    private string $adminEmail;
+    private string $adminPassword;
+    private int $testRecordCount;
     protected $instanceService;
 
     public function __construct(PocketbaseInstanceService $instanceService)
     {
         $this->instanceService = $instanceService;
+        $this->adminEmail = env('SPEED_TEST_ADMIN_EMAIL', 'admin@example.com');
+        $this->adminPassword = env('SPEED_TEST_ADMIN_PASSWORD', 'password123456');
+        $this->testRecordCount = (int)env('SPEED_TEST_RECORDS', 50);
     }
 
     public function runSpeedTest(Request $request)
     {
         try {
+            // Check password length before proceeding
+            if (strlen($this->adminPassword) < 10) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Admin password must be at least 10 characters long'
+                ], 422);
+            }
+
             // Step 1: Create instance
             $instance = $this->createTestInstance();
             
@@ -91,18 +103,19 @@ class PocketbaseTestController extends Controller
     private function createTestInstance()
     {
         // Get the highest speedtest number currently in use
-        $latestSpeedTest = Instance::where('name', 'like', 'speedtest_%')
-            ->orderByRaw('CAST(SUBSTRING(name, 11) AS UNSIGNED) DESC')
+        $baseSpeedTestName = env('SPEED_TEST_INSTANCE_NAME', 'speedtest');
+        $latestSpeedTest = Instance::where('name', 'like', $baseSpeedTestName . '_%')
+            ->orderByRaw('CAST(SUBSTRING(name, ' . (strlen($baseSpeedTestName) + 2) . ') AS UNSIGNED) DESC')
             ->first();
 
         // Start with 1 if no speedtests exist, otherwise increment the last number
         $number = 1;
         if ($latestSpeedTest) {
-            $lastNumber = (int) substr($latestSpeedTest->name, 10);
+            $lastNumber = (int) substr($latestSpeedTest->name, strlen($baseSpeedTestName) + 1);
             $number = $lastNumber + 1;
         }
 
-        $name = "speedtest_{$number}";
+        $name = "{$baseSpeedTestName}_{$number}";
         $port = $this->findAvailablePort();
 
         $instance = Instance::create([
@@ -170,12 +183,13 @@ class PocketbaseTestController extends Controller
             ])->throw()->json();
     }
 
-    private function writeTestRecords(string $token, int $count = 50)
+    private function writeTestRecords(string $token)
     {
         $startTime = microtime(true);
         $successCount = 0;
         $failureCount = 0;
         $totalTime = 0;
+        $count = $this->testRecordCount;
 
         Log::info('Starting speed test write operation', [
             'recordCount' => $count,

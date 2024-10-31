@@ -26,6 +26,7 @@ class Instance extends Model
 
     public function isSpeedTest(): bool
     {
-        return str_starts_with($this->name, 'speedtest_');
+        $speedTestPrefix = env('SPEED_TEST_INSTANCE_NAME', 'speedtest') . '_';
+        return str_starts_with($this->name, $speedTestPrefix);
     }
 }
