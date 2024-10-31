@@ -98,12 +98,20 @@ class PocketbaseInstanceService
         $success = $this->addInstance($name, $port ?? 8080);
         
         if ($success) {
-            // Add a delay before checking status to ensure container is running
+            // Increase delay to give more time for container to fully start
             sleep(2);
             
             // Double-check the instance status
             $statuses = $this->checkInstancesStatus();
             $isRunning = isset($statuses[$name]) && strtolower($statuses[$name]) === 'running';
+
+            
+            // Remove the dd() call and add more logging
+            Log::info('Instance start status:', [
+                'name' => $name,
+                'isRunning' => $isRunning,
+                'statuses' => $statuses
+            ]);
             
             if (!$isRunning) {
                 Log::warning('Instance reported success but is not running:', [
@@ -230,78 +238,88 @@ class PocketbaseInstanceService
     {
         $instances = Instance::all();
         $statuses = [];
-    
+
         foreach ($instances as $instance) {
-            // Initial default status for new instances
-            if ($instance->status === 'created') {
-                $statuses[$instance->name] = 'created';
-                continue;
-            }
-    
-            // Try both with and without the pb- prefix
-            $containerNames = [
-                $instance->name,           // without prefix
-                "pb-{$instance->name}"     // with prefix
-            ];
-    
-            $isRunning = false;
-            foreach ($containerNames as $containerName) {
-                $inspectCommand = "docker inspect --format='{{.State.Running}}' {$containerName} 2>/dev/null";
-                exec($inspectCommand, $inspectOutput, $inspectReturnCode);
-                
-                Log::debug('Docker inspect result:', [
-                    'container' => $containerName,
-                    'output' => $inspectOutput,
-                    'returnCode' => $inspectReturnCode,
-                    'command' => $inspectCommand
-                ]);
-    
-                if ($inspectReturnCode === 0 && trim($inspectOutput[0] ?? '') === 'true') {
-                    $isRunning = true;
-                    break;
-                }
-            }
-    
-            // Further check if PocketBase instance is responsive
-            if ($isRunning) {
-                $healthCheck = "curl -s -o /dev/null -w '%{http_code}' http://localhost:{$instance->port}/api/health";
-                exec($healthCheck, $healthOutput, $healthReturnCode);
-                
-                Log::debug('Health check result:', [
-                    'instance' => $instance->name,
-                    'port' => $instance->port,
-                    'output' => $healthOutput,
-                    'returnCode' => $healthReturnCode,
-                    'command' => $healthCheck
-                ]);
-    
-                $isRunning = ($healthReturnCode === 0 && end($healthOutput) === '200');
-            }
-    
-            // Determine new status based on current and previous status
-            $newStatus = 'stopped';
-            if ($isRunning) {
-                $newStatus = 'running';
-            } elseif ($instance->status === 'created') {
-                $newStatus = 'created';
-            }
-    
-            // Log and update status if there is a change
-            if ($instance->status !== $newStatus) {
-                Log::info('Updating instance status:', [
-                    'instance' => $instance->name,
-                    'oldStatus' => $instance->status,
-                    'newStatus' => $newStatus
-                ]);
-    
-                $instance->update(['status' => $newStatus]);
-            }
-    
-            $statuses[$instance->name] = $newStatus;
+            $isRunning = $this->checkInstanceStatus($instance);
+            $statuses[$instance->name] = $isRunning ? 'running' : 'stopped';
         }
-    
-        Log::info('Status check complete:', ['statuses' => $statuses]);
+
+        Log::info('Status check complete:', [
+            'statuses' => $statuses
+        ]);
+
         return $statuses;
+    }
+
+    public function checkInstanceStatus(Instance $instance): bool
+    {
+        $containerName = $instance->name;
+        $port = $instance->port;
+        
+        Log::debug('Checking instance:', [
+            'name' => $containerName,
+            'port' => $port,
+            'current_status' => $instance->status
+        ]);
+
+        // Check if Docker container is running
+        $dockerCommand = "docker inspect --format='{{.State.Running}}' $containerName 2>/dev/null";
+        exec($dockerCommand, $dockerOutput, $dockerReturnCode);
+        
+        // Get only the last (most recent) output
+        $isRunningInDocker = false;
+        if ($dockerReturnCode === 0) {
+            $lastOutput = end($dockerOutput);
+            $isRunningInDocker = trim($lastOutput) === 'true';
+            
+            Log::debug('Docker status check:', [
+                'container' => $containerName,
+                'output' => $dockerOutput,
+                'lastOutput' => $lastOutput,
+                'isRunning' => $isRunningInDocker
+            ]);
+        }
+
+        // Only check health if Docker container is running
+        $isHealthy = false;
+        if ($isRunningInDocker) {
+            $healthCommand = "curl -s -o /dev/null -w '%{http_code}' http://localhost:$port/api/health";
+            exec($healthCommand, $healthOutput, $healthReturnCode);
+            
+            $lastHealthOutput = end($healthOutput);
+            $isHealthy = $healthReturnCode === 0 && $lastHealthOutput === '200';
+            
+            Log::debug('Health check:', [
+                'instance' => $containerName,
+                'output' => $healthOutput,
+                'lastOutput' => $lastHealthOutput,
+                'isHealthy' => $isHealthy
+            ]);
+        }
+
+        $isRunning = $isRunningInDocker && $isHealthy;
+        $newStatus = $isRunning ? 'running' : 'stopped';
+        
+        Log::debug('Final status determination:', [
+            'instance' => $containerName,
+            'oldStatus' => $instance->status,
+            'newStatus' => $newStatus,
+            'isRunning' => $isRunning,
+            'dockerRunning' => $isRunningInDocker,
+            'healthCheck' => $isHealthy
+        ]);
+
+        if ($instance->status !== $newStatus) {
+            Log::info('Updating instance status:', [
+                'instance' => $containerName,
+                'oldStatus' => $instance->status,
+                'newStatus' => $newStatus
+            ]);
+            $instance->status = $newStatus;
+            $instance->save();
+        }
+
+        return $isRunning;
     }
     
 
@@ -428,12 +446,6 @@ class PocketbaseInstanceService
         }
     }
     
-    
-
-
-
-    
-
 
     public function getInstances(): array
     {

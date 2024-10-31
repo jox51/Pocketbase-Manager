@@ -11,6 +11,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\TerminalController;
 use App\Http\Controllers\LogsController;
 use App\Http\Controllers\PocketbaseVersionController;
+use App\Http\Controllers\PocketbaseTestController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -70,5 +71,9 @@ Route::get('/instances/{instance}/logs', [LogsController::class, 'show'])
 
 Route::get('/api/pocketbase-versions', [PocketbaseVersionController::class, 'index'])
     ->name('api.pocketbase-versions');
+
+Route::post('/speed-test', [PocketbaseTestController::class, 'runSpeedTest'])
+    ->middleware(['auth', 'verified'])
+    ->name('speed-test');
 
 require __DIR__.'/auth.php';

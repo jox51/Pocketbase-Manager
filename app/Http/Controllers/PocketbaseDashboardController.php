@@ -18,11 +18,27 @@ class PocketbaseDashboardController extends Controller
 
     public function index()
     {
-        $instances = Instance::all();
-        $statuses = $this->instanceService->checkInstancesStatus();
+        $instances = Instance::with(['latestSpeedTest' => function($query) {
+            $query->select(
+                'id',
+                'instance_id',
+                'total_records_attempted',
+                'successful_records',
+                'total_time_seconds',
+                'average_time_per_record_seconds',
+                'records_per_second'
+            );
+        }])
+        ->get()
+        ->map(function ($instance) {
+            return array_merge($instance->toArray(), [
+                'is_speed_test' => $instance->isSpeedTest()
+            ]);
+        });
+        
         return Inertia::render('PocketbaseDashboard', [
             'instances' => $instances,
-            'statuses' => $statuses
+            'statuses' => $this->instanceService->checkInstancesStatus()
         ]);
     }
 
