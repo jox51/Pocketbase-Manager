@@ -54,6 +54,7 @@ Update the following variables in your `.env` file:
 ```
 # Base URL for your Pocketbase instances
 # Use localhost for local development
+APP_URL=http://localhost
 POCKETBASE_BASE_URL=http://localhost
 SPEED_TEST_INSTANCE_NAME=speedrun    # Name of the instance used for testing
 SPEED_TEST_ADMIN_EMAIL=admin@example.com    # Admin email for test instance
@@ -84,4 +85,4 @@ php artisan serve
 
 ## License
 
-This project is open-sourced software licensed under the MIT license.
+This project is open-sourced software licensed under the MIT license. Thanks!
