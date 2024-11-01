@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./storage:/var/www/html/storage
+    privileged: true
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    user: root
+    networks:
+      - default
+      - pbmi_net
+
+networks:
+  default:
+    driver: bridge
+  pbmi_net:
+    external: true
+    name: pb-manager-scripts_pbmi_net

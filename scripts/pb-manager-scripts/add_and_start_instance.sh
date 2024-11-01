@@ -98,8 +98,10 @@ echo "Added new PocketBase instance: PB${next_pb_number}=\"${instance_name}:${sp
 docker exec pb-manager-scripts-caddy-1 caddy fmt --overwrite /etc/caddy/Caddyfile
 
 # Start only the new service and update Caddy
-docker compose up -d --no-deps ${instance_name}
-docker compose up -d --no-deps caddy
+docker run -d \
+    --name ${instance_name} \
+    --network pb-manager-scripts_pbmi_net \
+    # ... rest of your docker run command ...
 
 # Allow containers to initialize
 sleep 5
