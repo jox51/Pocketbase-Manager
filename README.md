@@ -43,7 +43,34 @@ composer install
 npm install
 ```
 
-5. Start the development server:
+5. Create and configure your environment file:
+
+```bash
+cp .env.example .env
+```
+
+Update the following variables in your `.env` file:
+
+```
+# Base URL for your Pocketbase instances
+# Use localhost for local development
+POCKETBASE_BASE_URL=http://localhost
+SPEED_TEST_INSTANCE_NAME=speedrun    # Name of the instance used for testing
+SPEED_TEST_ADMIN_EMAIL=admin@example.com    # Admin email for test instance
+SPEED_TEST_ADMIN_PASSWORD=superpassword    # Admin password for test instance
+SPEED_TEST_RECORDS=100    # Number of records to create during the test
+```
+
+These settings control how the speed test operates:
+
+-   The test creates a dedicated Pocketbase instance for performance testing
+-   It automatically creates and deletes records to measure write speeds
+-   You can adjust the number of test records to suit your needs
+-   Results help you optimize your server configuration
+
+````
+
+6. Start the development server:
 
 ```bash
 # Terminal 1
@@ -51,10 +78,20 @@ npm run dev
 
 # Terminal 2
 php artisan serve
-```
+````
 
-6. Visit `http://localhost:8000` in your browser
+7. Visit `http://localhost:8000` in your browser
 
 ## License
 
 This project is open-sourced software licensed under the MIT license.
+
+## Issues and Feedback
+
+Found a bug? Have a feature request? I'd love to hear from you! Feel free to:
+
+-   🐛 Open an issue on [GitHub Issues](https://github.com/jox51/pocketbase-manager/issues)
+-   💡 Suggest new features
+-   🔧 Submit pull requests
+
+Your feedback helps make Pocketbase Manager better for everyone!
