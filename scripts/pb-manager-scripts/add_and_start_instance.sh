@@ -101,7 +101,17 @@ docker exec pb-manager-scripts-caddy-1 caddy fmt --overwrite /etc/caddy/Caddyfil
 docker run -d \
     --name ${instance_name} \
     --network pb-manager-scripts_pbmi_net \
-    # ... rest of your docker run command ...
+    -v ${instance_name}_pb_data:/pb/pb_data \
+    pocketbase \
+    serve --http="0.0.0.0:8080" --dir="/pb/pb_data"
+
+# Add a check to verify the container is running and accessible
+echo "Waiting for PocketBase instance to start..."
+sleep 5
+if ! docker exec ${instance_name} wget --spider -q http://localhost:8080/_/; then
+    echo "Error: PocketBase instance failed to start properly"
+    exit 1
+fi
 
 # Allow containers to initialize
 sleep 5
