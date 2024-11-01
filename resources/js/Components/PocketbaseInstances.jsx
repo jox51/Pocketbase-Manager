@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import InstanceCard from "./InstanceCard";
 import CreateInstanceForm from "./CreateInstanceForm";
 import ShutdownModal from "./ShutdownModal";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 export default function PocketbaseInstances() {
     const [showModal, setShowModal] = useState(false);
@@ -51,7 +51,7 @@ export default function PocketbaseInstances() {
 
             if (data.success) {
                 console.log("Speed test results:", data.performance);
-                toast.success('Speed test completed successfully', {
+                toast.success("Speed test completed successfully", {
                     position: "top-right",
                     autoClose: 5000,
                     closeOnClick: true,
@@ -61,7 +61,7 @@ export default function PocketbaseInstances() {
                 window.location.reload();
             } else {
                 console.error("Speed test failed:", data.message);
-                toast.error(data.message || 'Speed test failed', {
+                toast.error(data.message || "Speed test failed", {
                     position: "top-right",
                     autoClose: 5000,
                     closeOnClick: true,
@@ -71,7 +71,7 @@ export default function PocketbaseInstances() {
             }
         } catch (error) {
             console.error("Speed test error:", error);
-            toast.error('An error occurred while running the speed test', {
+            toast.error("An error occurred while running the speed test", {
                 position: "top-right",
                 autoClose: 5000,
                 closeOnClick: true,

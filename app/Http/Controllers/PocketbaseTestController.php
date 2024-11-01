@@ -116,11 +116,9 @@ class PocketbaseTestController extends Controller
         }
 
         $name = "{$baseSpeedTestName}_{$number}";
-        $port = $this->findAvailablePort();
-
+ 
         $instance = Instance::create([
             'name' => $name,
-            'port' => $port,
             'status' => 'created'
         ]);
 
@@ -134,15 +132,7 @@ class PocketbaseTestController extends Controller
     {
         return $this->instanceService->startInstance(
             $instance->name,
-            $instance->port
         );
-    }
-
-    private function findAvailablePort()
-    {
-        // Find the highest port number currently in use
-        $highestPort = Instance::max('port') ?? 8089;
-        return $highestPort + 1;
     }
 
     private function createAdminUser()

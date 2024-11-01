@@ -11,10 +11,9 @@ return new class extends Migration
         Schema::create('instances', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->integer('port')->default(8090)->unique();
             $table->enum('status', ['created','stopped', 'starting', 'running', 'updating'])->default('created');
-            $table->string('version')->nullable()->after('port');
-            $table->string('download_url')->nullable()->after('version');
+            $table->string('version')->nullable();
+            $table->string('download_url')->nullable();
             $table->timestamps();
         });
     }

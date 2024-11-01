@@ -1,8 +1,9 @@
 #!/bin/sh
 
-# Default values
-DATA_DIR=${DATA_DIR:-"/pb_data"}
-HTTP_PORT=${HTTP_PORT:-8090}
+# Get instance name from container hostname
+INSTANCE_NAME=$(hostname)
 
-# Run PocketBase
-/pb/pocketbase serve --dir="${DATA_DIR}" --http="0.0.0.0:${HTTP_PORT}"
+# Start PocketBase with the correct data directory and port 8080
+exec /pb/pocketbase serve \
+    --dir /pocketbase/${INSTANCE_NAME} \
+    --http 0.0.0.0:8080

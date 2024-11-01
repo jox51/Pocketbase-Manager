@@ -1,13 +1,12 @@
 #!/bin/bash
 
-# Check if instance name and port are provided
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <instance_name> <port>"
+# Check if instance name is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <instance_name>"
     exit 1
 fi
 
 instance_name=$1
-port=$2
 
 # Create a temporary file
 temp_file=$(mktemp)
@@ -16,8 +15,7 @@ temp_file=$(mktemp)
 while IFS='=' read -r key value; do
     if [[ $key =~ ^PB[0-9]+$ ]]; then
         current_instance=$(echo $value | cut -d':' -f1 | tr -d '"' | tr -d '[:space:]')
-        current_port=$(echo $value | cut -d':' -f2 | tr -d '"' | tr -d '[:space:]')
-        if [ "$current_instance" != "$instance_name" ] || [ "$current_port" != "$port" ]; then
+        if [ "$current_instance" != "$instance_name" ]; then
             echo "$key=$value" >> "$temp_file"
         fi
     fi
@@ -46,4 +44,4 @@ docker exec pb-manager-scripts-caddy-1 caddy fmt --overwrite /etc/caddy/Caddyfil
 docker compose up -d --no-deps caddy
 docker exec pb-manager-scripts-caddy-1 caddy reload --config /etc/caddy/Caddyfile
 
-echo "PocketBase instance '${instance_name}' on port ${port} has been removed."
+echo "PocketBase instance '${instance_name}' has been removed."

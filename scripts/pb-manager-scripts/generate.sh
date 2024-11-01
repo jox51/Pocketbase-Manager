@@ -13,34 +13,27 @@ caddy_file=":80 {
 
 # Loop through the environment variables
 for var in $(compgen -A variable | grep '^PB[0-9]'); do
-  # Extract the name and port, removing any quotes
-  pb_name=$(echo ${!var} | cut -d':' -f1 | tr -d '"')
-  pb_port=$(echo ${!var} | cut -d':' -f2 | tr -d '"' | tr -d '\r')
-  
-  # Skip if either value is empty
-  if [ -z "$pb_name" ] || [ -z "$pb_port" ]; then
-    continue
-  fi
-  
-  # Add service to docker-compose.yml
-  compose_file+="  ${pb_name}:
+    # Extract just the name, removing any quotes
+    pb_name=$(echo ${!var} | tr -d '"' | tr -d '\r')
+    
+    # Skip if name is empty
+    if [ -z "$pb_name" ]; then
+        continue
+    fi
+    
+    # Add service to docker-compose.yml with fixed port 8080
+    compose_file+="  ${pb_name}:
     build: .
     container_name: ${pb_name}
-    environment:
-      - DATA_DIR=/pocketbase/${pb_name}
-      - HTTP_PORT=${pb_port}
-    ports:
-      - \"${pb_port}:${pb_port}\"
-    restart: always
     volumes:
       - ./pocketbase/${pb_name}:/pocketbase/${pb_name}
     networks:
       - pbmi_net
 "
 
-  # Add reverse proxy rule to Caddyfile
-  caddy_file+="  handle_path /${pb_name}* {
-    reverse_proxy ${pb_name}:${pb_port}
+    # Add reverse proxy rule to Caddyfile (using standard port 8080)
+    caddy_file+="  handle_path /${pb_name}* {
+    reverse_proxy ${pb_name}:8080
   }
 
 "

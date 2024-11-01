@@ -8,7 +8,6 @@ class Instance extends Model
 {
     protected $fillable = [
         'name',
-        'port',
         'status',
         'version',
         'download_url',

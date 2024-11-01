@@ -41,20 +41,18 @@ class PocketbaseInstanceService
         return $returnCode === 0;
     }
 
-    private function addInstance(string $name, int $port): bool
+    private function addInstance(string $name): bool
     {
         $scriptsPath = base_path('scripts/pb-manager-scripts');
         
         // Properly escape the arguments
         $escapedName = escapeshellarg($name);
-        $escapedPort = escapeshellarg((string)$port);
         
         // Build the command ensuring proper spacing and argument handling
         $command = sprintf(
-            'cd "%s" && bash add_and_start_instance.sh %s %s',
+            'cd "%s" && bash add_and_start_instance.sh %s',
             $scriptsPath,
-            $escapedName,
-            $escapedPort
+            $escapedName
         );
 
         Log::info('Current working directory:', [
@@ -74,14 +72,13 @@ class PocketbaseInstanceService
             'command' => $command,
             'output' => implode("\n", $output),
             'returnCode' => $returnCode,
-            'name' => $name,
-            'port' => $port
+            'name' => $name
         ]);
 
         return $returnCode === 0;
     }
 
-    public function startInstance(string $name, ?int $port = null): bool
+    public function startInstance(string $name): bool
     {
         // Check if this is the first instance and docker isn't running
         if (!$this->isDockerRunning()) {
@@ -95,7 +92,7 @@ class PocketbaseInstanceService
         }
 
         // Now add the new instance
-        $success = $this->addInstance($name, $port ?? 8080);
+        $success = $this->addInstance($name);
         
         if ($success) {
             // Increase delay to give more time for container to fully start
@@ -174,20 +171,18 @@ class PocketbaseInstanceService
         return false;
     }
 
-    public function deleteInstance(string $name, int $port): bool
+    public function deleteInstance(string $name): bool
     {
         $scriptsPath = base_path('scripts/pb-manager-scripts');
         
         // Properly escape the arguments
         $escapedName = escapeshellarg($name);
-        $escapedPort = escapeshellarg((string)$port);
         
         // Build the command ensuring proper spacing and argument handling
         $command = sprintf(
-            'cd "%s" && bash delete_instance.sh %s %s',
+            'cd "%s" && bash delete_instance.sh %s',
             $scriptsPath,
-            $escapedName,
-            $escapedPort
+            $escapedName
         );
         
         exec($command . " 2>&1", $output, $returnCode);
@@ -197,7 +192,6 @@ class PocketbaseInstanceService
             'output' => implode("\n", $output),
             'returnCode' => $returnCode,
             'name' => $name,
-            'port' => $port
         ]);
 
         return $returnCode === 0;
@@ -254,11 +248,9 @@ class PocketbaseInstanceService
     public function checkInstanceStatus(Instance $instance): bool
     {
         $containerName = $instance->name;
-        $port = $instance->port;
         
         Log::debug('Checking instance:', [
             'name' => $containerName,
-            'port' => $port,
             'current_status' => $instance->status
         ]);
 
@@ -283,7 +275,8 @@ class PocketbaseInstanceService
         // Only check health if Docker container is running
         $isHealthy = false;
         if ($isRunningInDocker) {
-            $healthCommand = "curl -s -o /dev/null -w '%{http_code}' http://localhost:$port/api/health";
+            // Update health check URL to use the new pattern
+            $healthCommand = "curl -s -o /dev/null -w '%{http_code}' http://localhost/{$containerName}/api/health";
             exec($healthCommand, $healthOutput, $healthReturnCode);
             
             $lastHealthOutput = end($healthOutput);
@@ -462,7 +455,6 @@ class PocketbaseInstanceService
         $instances = Instance::all()->map(function ($instance) {
             return [
                 'name' => $instance->name,
-                'port' => $instance->port,
                 'status' => $instance->status,
                 'created_at' => $instance->created_at,
                 'updated_at' => $instance->updated_at,
@@ -483,7 +475,6 @@ class PocketbaseInstanceService
 
         return [
             'name' => $instance->name,
-            'port' => $instance->port,
             'status' => $instance->status,
             'created_at' => $instance->created_at,
             'updated_at' => $instance->updated_at,

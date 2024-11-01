@@ -1,126 +1,60 @@
 #!/bin/bash
 
-# Function to get the next available PB number and the highest port number
-get_next_pb_and_port() {
-    local max_number=0
-    local max_port=8080  # Default starting port if no entries exist
-    while IFS='=' read -r key value; do
-        if [[ $key =~ ^PB[0-9]+$ ]]; then
-            number=${key#PB}
-            port=$(echo $value | cut -d':' -f2 | tr -d '"' | tr -d '[:space:]')
-            echo "DEBUG: Found entry - Number: $number, Port: $port" >&2
-            # Find the highest PB number
-            if (( number > max_number )); then
-                max_number=$number
-            fi
-            # Find the highest port number and increment it
-            if (( port > max_port )); then
-                max_port=$port
-            fi
-        fi
-    done < .env
-    echo "DEBUG: Final max_number: $max_number, max_port: $max_port" >&2
-    echo $((max_number + 1)) $((max_port + 1))
-}
-
 # Check if instance name is provided
-if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 <instance_name> [port]"
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <instance_name>"
     exit 1
 fi
 
 instance_name=$1
 
-# Validate instance name (alphanumeric and underscores only)
-if ! [[ $instance_name =~ ^[a-zA-Z0-9_]+$ ]]; then
-    echo "Error: Instance name should contain only alphanumeric characters and underscores."
-    exit 1
-fi
+# Get current user
+current_user=$(whoami)
+echo "Current user: $current_user"
 
-# Get the next available PB number regardless of whether a port is provided
-read next_pb_number next_port <<< $(get_next_pb_and_port)
+# Find next available PB number
+next_pb=1
+while grep -q "^PB${next_pb}=" .env 2>/dev/null; do
+    ((next_pb++))
+done
 
-# Check if a specific port is provided
-if [ "$#" -eq 2 ]; then
-    specific_port=$2
-    # Validate the provided port (it should be a number between 1024 and 65535)
-    if ! [[ $specific_port =~ ^[0-9]+$ ]] || [ "$specific_port" -lt 1024 ] || [ "$specific_port" -gt 65535 ]; then
-        echo "Error: Port should be a number between 1024 and 65535."
-        exit 1
-    fi
-else
-    specific_port=$next_port
-fi
+# Add new instance to .env file
+echo "PB${next_pb}=\"${instance_name}\"" >> .env
+echo "Added new PocketBase instance: PB${next_pb}=\"${instance_name}\""
 
-# Check for duplicates before adding to .env
-# check_for_duplicates() {
-#     local new_instance=$1
-#     local new_port=$2
-#     local duplicate_found=false
-    
-#     while IFS='=' read -r key value; do
-#         if [[ $key =~ ^PB[0-9]+$ ]]; then
-#             existing_instance=$(echo $value | cut -d':' -f1 | tr -d '"' | tr -d '[:space:]')
-#             existing_port=$(echo $value | cut -d':' -f2 | tr -d '"' | tr -d '[:space:]')
-#             if [[ "$existing_instance" == "$new_instance" && "$existing_port" == "$new_port" ]]; then
-#                 duplicate_found=true
-#                 break
-#             fi
-#         fi
-#     done < .env
-#     echo $duplicate_found
-# }
-
-# Check for duplicates before adding to .env
-# if [[ $(check_for_duplicates "$instance_name" "$specific_port") == "true" ]]; then
-#     echo "Error: Instance name '$instance_name' with port '$specific_port' already exists. Skipping."
-#     exit 1
-# fi
-
-# Remove any existing container with the same name
-docker rm -f ${instance_name} 2>/dev/null || true
-
-# Add the new instance to the .env file
-temp_file=$(mktemp)
-while IFS='=' read -r key value || [ -n "$key" ]; do
-    if [[ $key =~ ^PB[0-9]+$ ]]; then
-        echo "$key=$value" >> "$temp_file"
-    fi
-done < .env
-echo "PB${next_pb_number}=\"${instance_name}:${specific_port}\"" >> "$temp_file"
-mv "$temp_file" .env
-echo "Added new PocketBase instance: PB${next_pb_number}=\"${instance_name}:${specific_port}\""
-
-# Run generate.sh to update docker-compose.yml and Caddyfile
+# Regenerate docker-compose.yml and Caddyfile
 ./generate.sh
 
-# Format the Caddyfile to ensure no warnings
-docker exec pb-manager-scripts-caddy-1 caddy fmt --overwrite /etc/caddy/Caddyfile
+# Create instance directory if it doesn't exist
+mkdir -p "./pocketbase/${instance_name}"
 
-# Start only the new service and update Caddy
-docker run -d \
-    --name ${instance_name} \
-    --network pb-manager-scripts_pbmi_net \
-    -v ${instance_name}_pb_data:/pb/pb_data \
-    pocketbase \
-    serve --http="0.0.0.0:8080" --dir="/pb/pb_data"
+# Build and start the containers
+docker compose up -d --build
 
-# Add a check to verify the container is running and accessible
+# Wait for the container to be ready
 echo "Waiting for PocketBase instance to start..."
-sleep 5
-if ! docker exec ${instance_name} wget --spider -q http://localhost:8080/_/; then
-    echo "Error: PocketBase instance failed to start properly"
-    exit 1
-fi
-
-# Allow containers to initialize
-sleep 5
-
-# Verify the new instance started by checking recent logs
-docker logs --tail 10 ${instance_name}
+max_attempts=30
+attempt=0
+while [ $attempt -lt $max_attempts ]; do
+    if docker ps | grep -q "${instance_name}"; then
+        echo "PocketBase instance started successfully"
+        
+        # Restart Caddy to recognize the new instance
+        echo "Restarting Caddy to recognize the new instance..."
+        docker compose restart caddy
+        
+        # Wait a moment for Caddy to fully restart
+        sleep 2
+        
+        echo "Setup complete! Access your instance at: http://localhost/${instance_name}/_/"
+        exit 0
+    fi
+    ((attempt++))
+    sleep 1
+done
 
 # Explicitly reload Caddy configuration
 docker exec pb-manager-scripts-caddy-1 caddy reload --config /etc/caddy/Caddyfile
-echo "Caddy configuration reloaded."
 
-echo "New PocketBase instance '${instance_name}' has been added and started on port ${specific_port}."
+echo "Error: PocketBase instance failed to start properly"
+exit 1

@@ -164,7 +164,7 @@ export default function Terminal({ instance, fullScreen = false }) {
                 {history.map((entry, index) => (
                     <div
                         key={index}
-                        className={`font-mono ${entry.className || ''} ${
+                        className={`font-mono ${entry.className || ""} ${
                             entry.type === "error"
                                 ? "text-red-400"
                                 : entry.type === "input"

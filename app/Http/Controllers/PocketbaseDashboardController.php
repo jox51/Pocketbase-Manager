@@ -47,14 +47,12 @@ class PocketbaseDashboardController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255|unique:instances,name',
-                'port' => 'required|integer|min:1000|max:65535|unique:instances,port',
                 'version' => 'nullable|string',
                 'download_url' => 'nullable|url'
             ]);
     
             $instance = Instance::create([
                 'name' => $validated['name'],
-                'port' => $validated['port'],
                 'version' => $validated['version'] ?? null,
                 'download_url' => $validated['download_url'] ?? null,
                 'status' => 'created'
@@ -63,8 +61,7 @@ class PocketbaseDashboardController extends Controller
             return redirect()->back()->with('success', 'Instance created successfully.');
         } catch (\Illuminate\Database\QueryException $e) {
             return redirect()->back()->withErrors([
-                'name' => 'The instance name must be unique.',
-                'port' => 'The port number must be unique.'
+                'name' => 'The instance name must be unique.'
             ])->withInput();
         }
     }
@@ -73,7 +70,6 @@ class PocketbaseDashboardController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string',
-            'port' => 'required|integer|min:1000|max:65535'
         ]);
 
         $instance = Instance::where('name', $validated['name'])->firstOrFail();
@@ -86,7 +82,7 @@ class PocketbaseDashboardController extends Controller
             
             $success = $this->instanceService->startInstance(
                 $validated['name'], 
-                $validated['port'],
+
                 // $version,        // Pass empty string instead of null
                 // $downloadUrl    // Pass empty string instead of null
             );
@@ -152,7 +148,6 @@ class PocketbaseDashboardController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string',
-            'port' => 'required|integer|min:1024|max:65535'
         ]);
 
         $instance = Instance::where('name', $validated['name'])->firstOrFail();
@@ -166,7 +161,6 @@ class PocketbaseDashboardController extends Controller
         try {
             $success = $this->instanceService->deleteInstance(
                 $validated['name'],
-                $validated['port']
             );
 
             if ($success) {
