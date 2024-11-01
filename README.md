@@ -1,34 +1,34 @@
 # Pocketbase Manager
 
 <p align="center">
-  <img src="dashboard.png" alt="Pocketbase Manager Dashboard" width="100%">
+  <img src="https://github.com/jox51/Pocketbase-Manager/blob/main/resources/assets/dashboard.png" alt="Pocketbase Manager Dashboard" width="100%">
 </p>
 
 Pocketbase Manager is a powerful web application that simplifies the creation and management of multiple Pocketbase instances. Built with Laravel and React, it provides a user-friendly interface to control your Pocketbase deployments.
 
 ## Features
 
-- 🚀 Create and manage multiple Pocketbase instances
-- 🔄 Start, stop, and restart instances
-- 📊 Monitor instance status
-- ⚡ Run performance speed tests
-- 🖥️ Built-in terminal interface
-- 🔒 Secure authentication system
-- 🌐 Centralized management dashboard
+-   🚀 Create and manage multiple Pocketbase instances
+-   🔄 Start, stop, and restart instances
+-   📊 Monitor instance status
+-   ⚡ Run performance speed tests
+-   🖥️ Built-in terminal interface
+-   🔒 Secure authentication system
+-   🌐 Centralized management dashboard
 
 ## Requirements
 
-- PHP >= 8.2
-- Composer
-- Node.js & NPM
-- Docker
+-   PHP >= 8.2
+-   Composer
+-   Node.js & NPM
+-   Docker
 
 ## Quick Start
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/pocketbase-manager.git
+git clone https://github.com/jox51/pocketbase-manager.git
 cd pb-manager
 ```
 
