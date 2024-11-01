@@ -94,4 +94,4 @@ Found a bug? Have a feature request? I'd love to hear from you! Feel free to:
 -   💡 Suggest new features
 -   🔧 Submit pull requests
 
-Your feedback helps make Pocketbase Manager better for everyone!
+Your feedback helps make Pocketbase Manager better for everyone! Thanks!
