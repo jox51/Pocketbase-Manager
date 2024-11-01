@@ -85,13 +85,3 @@ php artisan serve
 ## License
 
 This project is open-sourced software licensed under the MIT license.
-
-## Issues and Feedback
-
-Found a bug? Have a feature request? I'd love to hear from you! Feel free to:
-
--   🐛 Open an issue on [GitHub Issues](https://github.com/jox51/pocketbase-manager/issues)
--   💡 Suggest new features
--   🔧 Submit pull requests
-
-Your feedback helps make Pocketbase Manager better for everyone! Thanks!
